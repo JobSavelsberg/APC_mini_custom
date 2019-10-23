@@ -1,4 +1,4 @@
-# APC-mini-custom
+# APC mini custom
  
 A custom ableton 10 MIDI remote script for the Akai APC mini.
 
@@ -23,4 +23,4 @@ To be determined...
 
 ## Acknowledgments
 
-Based off of the work of [**Mark Hardwood**](https://github.com/markharwood/)- [MH_APC_mini](https://github.com/markharwood/MH_APC_mini)
+Based off of the work of [**Mark Hardwood**](https://github.com/markharwood/) - [MH_APC_mini](https://github.com/markharwood/MH_APC_mini)
