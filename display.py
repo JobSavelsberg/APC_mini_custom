@@ -7,6 +7,16 @@ r = 4
 Y = 5
 y = 6
 
+CLEAR = [
+    [0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0]
+]
 RED = [
     [R, R, R, R, R, R, R, R],
     [R, R, R, R, R, R, R, R],
@@ -28,16 +38,39 @@ JOB = [
     [0, 0, 0, 0, 0, 0, 0, 0]
 ]
 
-def clear (apc):
-    apc._update_hardware()
+def clearAll (apc):
+    clearM(apc)
+    clearV(apc)
+    clearH(apc)
+
+def clearM (apc):
+    img(apc, CLEAR)
+
+def clearV (apc):
+    allV(apc, 0)
+
+def clearH (apc):
+    allH(apc, 0)
 
 def img (apc, img):
     for y in range(8):
         for x in range(8):
-            apc.really_do_send_midi((APC.NOTE_ON_STATUS, x+(7-y)*8 , img[y][x]))
+            apc._send_midi((APC.NOTE_ON_STATUS, x+(7-y)*8 , img[y][x]))
 
-def on (apc, x, y, color):
-    apc.really_do_send_midi((APC.NOTE_ON_STATUS, x+y*8, color))
+def M (apc, x, y, color):
+    M(apc, x + y * 8, color)
+def M (apc, i, color):
+    apc._send_midi((APC.NOTE_ON_STATUS, i, color))
 
-def off (apc, x, y):
-    apc.really_do_send_midi((APC.NOTE_ON_STATUS, x+y*8, 0))
+def V(apc, i, color):
+    apc._send_midi((APC.NOTE_ON_STATUS, 82+i, color))
+
+def H(apc, i, color):
+    apc._send_midi((APC.NOTE_ON_STATUS, 64+i, color))
+
+def allV(apc, color):
+    for v in range(8):
+        V(apc, v, color)
+def allH(apc, color):
+    for h in range(8):
+        H(apc, h, color)
