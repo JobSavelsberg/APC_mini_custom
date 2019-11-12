@@ -1,22 +1,18 @@
-#Embedded file name: /Users/versonator/Jenkins/live/output/mac_64_static/Release/python-bundle/MIDI Remote Scripts/APC_mini/APC_mini.py
-from __future__ import with_statement
-from _Framework.Layer import Layer, SimpleLayerOwner
-from _APC.ControlElementUtils import make_slider
-from _Framework.ControlSurface import ControlSurface
-from _APC.APC import APC
-from APC_Key_25.APC_Key_25 import APC_Key_25
-from APC_mini.APC_mini import APC_mini
-import time
-import display as disp
-import skins
+from __future__ import absolute_import, print_function, unicode_literals
+import Live
 from functools import partial
+from itertools import izip
 
-from _APC.SkinDefault import make_default_skin, make_biled_skin, make_stop_button_skin
-from _Framework.ButtonElement import ButtonElement
-from _Framework.TransportComponent import TransportComponent
-from _Framework.ToggleComponent import ToggleComponent
+import Live
+import sys
 
-from _APC.ControlElementUtils import make_button, make_knob
+from _Framework.Layer import Layer
+
+from _APC.APC import APC
+from _APC.ControlElementUtils import make_button, make_pedal_button, make_slider
+
+import APC_mini_custom.skins as skins
+from APC_mini_custom.TestComponent import TestComponent
 
 MIDI_NOTE_TYPE = 0
 MIDI_CC_TYPE = 1
@@ -26,26 +22,16 @@ SHIFT = 98
 CC_STATUS = 176
 
 class APC_mini_custom(APC):
+    # Connecting APC to ableton
     def _product_model_id_byte(self):
         return 40
-
-    def __init__(self, *a, **k):
-        super(APC_mini_custom, self).__init__( *a, **k)
-        self.on_off_skin = skins.get_on_off()
-        self._suppress_send_midi = False
-        self.setupStarted = False
-        self.mode = AbletonControls(self)
-
-    def setup(self):
-        self.setupStarted = True
-        self.show_message("Setting Up...")
-        self.make_on_off_button = partial(make_button, skin=self.on_off_skin)
-        self.mode.enter()
-
+    
+    def _update_hardware(self):
+        self._send_midi((240, 126, 127, 6, 1, 247))
+        return
 
     def _on_identity_response(self, midi_bytes):
         super(APC_mini_custom, self)._on_identity_response(midi_bytes)
-        self.setup()
 
     def _send_dongle_challenge(self):
         pass
@@ -53,78 +39,40 @@ class APC_mini_custom(APC):
     def _on_handshake_successful(self):
         pass
 
+    def print_message(self, message):
+        self.log_message(message)
+        self.show_message(message)
+
     def receive_midi(self, midi_bytes):
-        self.log_message("Received: " + str(midi_bytes))
-        self.show_message("Received: " + str(midi_bytes))
+        self.print_message("Received " + str(midi_bytes))
         super(APC_mini_custom, self).receive_midi(midi_bytes)
 
+    # Setting up
+    def __init__(self, *a, **k):
+        super(APC_mini_custom, self).__init__( *a, **k)
+        self.print_message("Initialized APC")
+        with self.component_guard():
+            self.setup()
 
-    # updates every 100 ms
-    def update_display(self):
-        super(APC_mini_custom, self).update_display()
-        if (not self.setupStarted and not self._suppress_send_midi):
-            self.splash()
 
-    def splash(self):
-        disp.img(self, disp.JOB)
-        disp.allH(self, 1)
-        disp.allV(self, 1)
+    def setup(self):
+        self.setupStarted = True
+        self._create_controls()
+        self._setup_cue_control()
 
-    def _update_hardware(self):
-        self._send_midi((240, 126, 127, 6, 1, 247))
-        return
-# Base class for a mode
-class Mode():
-    def __init__(self, apc):
-        self.apc = apc
-        self.apc.log_message("Mode set to: " + self.getName())
-        self.apc.show_message("Mode set to: " + self.getName())
+    def _create_controls(self):
+        #self._fader = make_slider(1, 48, b'Fader_%d' % 0)
 
-    def enter(self):
-        self.apc.log_message("Entered mode: " + self.getName())
-        self.apc.show_message("Entered mode: " + self.getName())
-        disp.clearAll(self.apc)
+        self._up_button = make_button(0, 64, b'Up_Button')
+        self._down_button = make_button(0, 65, b'Down_Button')
+        self._left_button = make_button( 0, 66, name = b'Left_Button')
+        self._right_button = make_button( 0, 67, name = b'Right_Button')
 
-# Mode Selector mode
-class ModeSelector(Mode):
-    def __init__(self, apc):
-        Mode.__init__(self, apc)
-    
-    def getName(self):
-        return "Mode Selector"
-
-    def enter(self):
-        Mode.enter(self)
-        disp.allV(self.apc, 2)
-        self.apc.log_message("Done entering")
-
-# Ableton Control mode
-class AbletonControls(Mode):
-    def __init__(self, apc):
-        Mode.__init__(self, apc)
-
-    def getName(self):
-        return "Ableton Controls"
-
-    def enter(self):
-        Mode.enter(self)
-
-        self.transport = TransportComponent() #Instantiate a Transport Component
-        self.transport.set_play_button(self.apc.make_on_off_button( 0, 0)) #ButtonElement(is_momentary, msg_type, channel, identifier)
-        self.transport.set_stop_button(self.apc.make_on_off_button(0, 1))
-        self.transport.set_record_button(self.apc.make_on_off_button(0, 2))
-# Track Arm mode
-class TrackArm(Mode):
-    def __init__(self, apc):
-        Mode.__init__(self, apc)
-        apc.create_arm_buttons()
-
-    def getName(self):
-        return "Track Arm"
-# Setlist mode
-class Setlist(Mode):
-    def __init__(self, apc):
-        Mode.__init__(self, apc)
-
-    def getName(self):
-        return "Setlist"
+    def _setup_cue_control(self):
+        self._cue_control = TestComponent(self, name=b'Cue_Point_Control')
+        self._cue_control.set_enabled(False)
+        self._cue_control.layer = Layer(prev_cue_button=self._left_button, next_cue_button=self._right_button)
+        self._cue_control.set_enabled(True)
+        cuepoints = self.song().cue_points
+        self.print_message(str(cuepoints[0].name))
+        self.song().cue_points[3].jump()

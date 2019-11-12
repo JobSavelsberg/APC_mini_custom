@@ -55,18 +55,18 @@ def clearH (apc):
 def img (apc, img):
     for y in range(8):
         for x in range(8):
-            apc._send_midi((APC.NOTE_ON_STATUS, x+(7-y)*8 , img[y][x]))
+            apc.really_send_midi((APC.NOTE_ON_STATUS, x+(7-y)*8 , img[y][x]))
 
 def M (apc, x, y, color):
     M(apc, x + y * 8, color)
 def M (apc, i, color):
-    apc._send_midi((APC.NOTE_ON_STATUS, i, color))
+    apc.really_send_midi((APC.NOTE_ON_STATUS, i, color))
 
 def V(apc, i, color):
-    apc._send_midi((APC.NOTE_ON_STATUS, 82+i, color))
+    apc.really_send_midi((APC.NOTE_ON_STATUS, 82+i, color))
 
 def H(apc, i, color):
-    apc._send_midi((APC.NOTE_ON_STATUS, 64+i, color))
+    apc.really_send_midi((APC.NOTE_ON_STATUS, 64+i, color))
 
 def allV(apc, color):
     for v in range(8):
@@ -74,3 +74,8 @@ def allV(apc, color):
 def allH(apc, color):
     for h in range(8):
         H(apc, h, color)
+
+def splash(apc):
+    disp.img(apc, disp.JOB)
+    disp.allH(apc, 1)
+    disp.allV(apc, 1)
