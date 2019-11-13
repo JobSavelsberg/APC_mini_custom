@@ -76,6 +76,6 @@ def allH(apc, color):
         H(apc, h, color)
 
 def splash(apc):
-    disp.img(apc, disp.JOB)
-    disp.allH(apc, 1)
-    disp.allV(apc, 1)
+    img(apc, JOB)
+    allH(apc, 1)
+    allV(apc, 1)

@@ -2,7 +2,7 @@ from __future__ import absolute_import, print_function, unicode_literals
 from _Framework.Skin import Skin
 from _Framework.ButtonElement import Color
 from pushbase.colors import Rgb, Pulse, Blink
-BLACK = Color(0)
+OFF = Color(0)
 GREEN = Color(1)
 GREEN_BLINK = Color(2)
 RED = Color(3)
@@ -14,12 +14,22 @@ class Colors:
     class DefaultButton:
         On = GREEN
         Off = RED
-        Disabled = BLACK
-    class Mode: #mode buttons colour
-    	class Arm:
-			On = RED
-			Off = AMBER
+        Disabled = OFF
+    class Cue:
+        class GreenCue:
+            On = GREEN_BLINK
+            Off = GREEN
+            Disabled = OFF
+        class RedCue:
+            On = RED_BLINK
+            Off = RED
+            Disabled = OFF
+        class AmberCue:
+            On = AMBER_BLINK
+            Off = AMBER
+            Disabled = OFF
+
 def make_skin():
     return Skin(Colors)
-def get_on_off():
-    return Skin(Colors)
+def get_cue_button():
+    return Skin(Colors.Cue)
