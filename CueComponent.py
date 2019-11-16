@@ -21,6 +21,8 @@ class CueComponent(ControlSurfaceComponent):
     _midiccinst_params = []
     _midiccinst_prevval = []
 
+    _instrument_button_setup_done = False
+
     def __init__(self, apc, play_on_cue, *a, **k):
         super(CueComponent, self).__init__(*a, **k)
         self._play_on_cue = play_on_cue
@@ -30,12 +32,13 @@ class CueComponent(ControlSurfaceComponent):
         self.apc = apc
     
     def _on_midiccinst_change(self):
-        for i, param in enumerate(self._midiccinst_params):
-            if(param.value != self._midiccinst_prevval[i]):
-                self._current_instrument_index = i
-                self._midiccinst_prevval[i] = param.value
-        self._instrument_cues[self._current_song_index][self._current_instrument_index].jump()
-        self.update_buttons()
+        if(self._instrument_button_setup_done):
+            for i, param in enumerate(self._midiccinst_params):
+                if(param.value != self._midiccinst_prevval[i]):
+                    self._current_instrument_index = i
+                    self._midiccinst_prevval[i] = param.value
+            self._instrument_cues[self._current_song_index][self._current_instrument_index].jump()
+            self.update_buttons()
 
     def set_cue_buttons(self, buttons):
         self._cues = sorted(self.song().cue_points, key=lambda cue: cue.time)
@@ -72,6 +75,7 @@ class CueComponent(ControlSurfaceComponent):
             button.add_value_listener(self._on_select_instrument, True)
             self._instrument_buttons.append(button)
         self.update_buttons()
+        self._instrument_button_setup_done = True
 
     def set_prev_cue_button(self, button):
         self._prev_cue_button = button
@@ -96,10 +100,6 @@ class CueComponent(ControlSurfaceComponent):
     def _on_select_instrument(self, value, sender):
         index = self._instrument_buttons.index(sender)
         self._instrument_cues[self._current_song_index][index].jump()
-        #if( value > 0):
-            #self.song().is_playing = self._play_on_cue
-        #else:
-            #self.song().stop_playing()
         self._current_instrument_index = index
         self.update_buttons()
 
@@ -154,5 +154,12 @@ class CueComponent(ControlSurfaceComponent):
                     instrument_button.set_light("Off")
             else:
                 instrument_button.set_light("Disabled")
+
+    def reset_lights(self):
+        for button in self._cue_buttons:
+            button.set_light(button.cue_color+"Cue.Disabled")
+        for button in self._instrument_buttons:
+            button.set_light("Disabled")
+        self.update_buttons()
                 
         

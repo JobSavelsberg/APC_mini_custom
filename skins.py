@@ -32,6 +32,14 @@ class Colors:
         On = GREEN
         Off = AMBER
         Disabled = OFF
+    class Mute:
+        On = RED
+        Off = OFF
+        Disabled = OFF
+    class Omni:
+        On = GREEN
+        Off = AMBER
+        Disabled = OFF
 
 def make_skin():
     return Skin(Colors)
@@ -39,3 +47,7 @@ def get_cue_button():
     return Skin(Colors.Cue)
 def get_instrument_button():
     return Skin(Colors.Instrument)
+def get_mute_button():
+    return Skin(Colors.Mute)
+def get_omni_button():
+    return Skin(Colors.Omni)
