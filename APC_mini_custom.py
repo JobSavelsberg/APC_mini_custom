@@ -9,8 +9,10 @@ import sys
 from _Framework.Layer import Layer
 from _Framework.TransportComponent import TransportComponent
 from _Framework.ButtonMatrixElement import ButtonMatrixElement
+from _Framework.DeviceComponent import DeviceComponent
 
 from _APC.APC import APC
+from _APC.MixerComponent import MixerComponent
 from _APC.ControlElementUtils import make_button, make_pedal_button, make_slider
 
 import APC_mini_custom.display as disp
@@ -52,6 +54,7 @@ class APC_mini_custom(APC):
         super(APC_mini_custom, self).receive_midi(midi_bytes)
 
     def really_send_midi(self, midi_bytes):
+        #self.print_message("Sending " + str(midi_bytes))
         super(APC_mini_custom, self)._do_send_midi(midi_bytes)
 
     # Setting up
@@ -69,7 +72,8 @@ class APC_mini_custom(APC):
     def setup(self):
         self.setupStarted = True
         self._create_controls()
-        self._setup_cue_control()
+        self._cue_control = self._setup_cue_control()
+        #self._master_controls = self._setup_master_controls()
         self._setup_transport_control()
 
     def _create_controls(self):
@@ -79,21 +83,50 @@ class APC_mini_custom(APC):
         self._cue_buttons = [ self._matrix_buttons[i] for r in range(cue_rows) for i in range(MATRIX_SIZE*(MATRIX_SIZE-(r+1)),MATRIX_SIZE*(MATRIX_SIZE-r)) ]
         for button in self._cue_buttons:
             button._skin = skins.get_cue_button()
-        
+        self._instrument_buttons = [self._matrix_buttons[i] for i in range(MATRIX_SIZE-1)]
+        for button in self._instrument_buttons:
+            button._skin = skins.get_instrument_button()
+
         self._vertical_buttons = [ make_color_button(0, 82 + i, name="Vertical_Button_%d" % i ) for i in range(MATRIX_SIZE) ]
         self._horizontal_buttons = [ make_color_button(0, 64 + i, name="Horizontal_Button_%d" % i ) for i in range(MATRIX_SIZE) ]
 
         self._left_button = self._horizontal_buttons[2]
         self._right_button = self._horizontal_buttons[3]
 
+        self._master_add_volume_control = make_slider(0, 55, name=b'Master_Add_Volume_Control')
+        self._master_sub_volume_control = make_slider(0, 56, name=b'Master_Sub_Volume_Control')
+
+
     def _setup_cue_control(self):
-        self._cue_control = CueComponent(self, name=b'Cue_Point_Control', play_on_cue=True)
-        self._cue_control.set_cue_buttons(self._cue_buttons)
-        self._cue_control.set_enabled(True)
-        cuepoints = self.song().cue_points
-        self.print_message(str(cuepoints[0].name))
-        self.song().cue_points[3].jump()
+        cue_control = CueComponent(self, name=b'Cue_Point_Control', play_on_cue=True)
+        cue_control.set_cue_buttons(self._cue_buttons)
+        cue_control.set_instrument_buttons(self._instrument_buttons)
+        cue_control.set_enabled(True)
+
+        #midi_component = DeviceComponent()
+        #midi_component.set_device(self.song().tracks[0].devices[0])
+        #for param in midi_component._current_bank_details()[1]:
+        #    self.print_message(param.name)
+
+        return cue_control
  
+    def _setup_master_controls(self):
+        add_component = DeviceComponent()
+        sub_component = DeviceComponent()
+
+        master_devices = self.song().master_track.devices
+        for device in master_devices:
+            if(device.name == "ADD"):
+                add_component.set_device(device)
+            if(device.name == "SUB"):
+                sub_component.set_device(device)
+        #[1][6] is the gain parameter of the utility effect
+        add_gain = add_component._current_bank_details()[1][6]
+        self._master_add_volume_control.connect_to(add_gain)
+        sub_gain = sub_component._current_bank_details()[1][6]
+        self._master_sub_volume_control.connect_to(sub_gain)
+        return add_component, sub_component
+
     def _setup_transport_control(self):
         self._transport_control = TransportComponent(name=b'Transport')
         #self._transport_control.set_play_button(self._matrix_buttons[0])

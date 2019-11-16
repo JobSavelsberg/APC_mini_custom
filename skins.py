@@ -28,8 +28,14 @@ class Colors:
             On = AMBER_BLINK
             Off = AMBER
             Disabled = OFF
+    class Instrument:
+        On = GREEN
+        Off = AMBER
+        Disabled = OFF
 
 def make_skin():
     return Skin(Colors)
 def get_cue_button():
     return Skin(Colors.Cue)
+def get_instrument_button():
+    return Skin(Colors.Instrument)
