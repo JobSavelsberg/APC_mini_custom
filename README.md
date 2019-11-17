@@ -20,7 +20,3 @@ To install this MIDI Remote Script do the following
 # How to use
 
 To be determined...
-
-## Acknowledgments
-
-Based off of the work of [**Mark Hardwood**](https://github.com/markharwood/) - [MH_APC_mini](https://github.com/markharwood/MH_APC_mini)
